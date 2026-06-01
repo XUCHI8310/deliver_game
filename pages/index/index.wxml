@@ -1,0 +1,36 @@
+<view class="home-page">
+  <!-- 标题区域 -->
+  <view class="header">
+    <text class="title">快递到家</text>
+    <text class="subtitle">2D闯关益智</text>
+  </view>
+
+  <!-- 关卡网格 -->
+  <scroll-view class="level-grid" scroll-y>
+    <view
+      class="level-card {{item.locked ? 'locked' : ''}}"
+      wx:for="{{levels}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      data-index="{{index}}"
+      bindtap="onLevelTap"
+    >
+      <view class="level-number">{{index + 1}}</view>
+      <view class="level-name">{{item.name}}</view>
+      <view class="level-stars">
+        <text
+          wx:for="{{3}}"
+          wx:for-item="s"
+          wx:key="*this"
+          class="star {{item.stars > s ? 'active' : ''}}"
+        >★</text>
+      </view>
+      <view class="lock-icon" wx:if="{{item.locked}}">🔒</view>
+    </view>
+  </scroll-view>
+
+  <!-- 关卡编辑按钮 -->
+  <view class="editor-btn" bindtap="onEditorTap">
+    <text>✏️ 关卡编辑</text>
+  </view>
+</view>

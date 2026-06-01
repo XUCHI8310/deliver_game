@@ -1,0 +1,69 @@
+<view class="game-page">
+  <view class="info-bar">
+    <text class="level-name">{{levelName}}</text>
+    <text class="step-info">步数: {{steps}}</text>
+  </view>
+
+  <canvas 
+    type="2d" 
+    id="gameCanvas" 
+    class="game-canvas"
+    bindtouchstart="onTouchStart"
+    bindtouchmove="onTouchMove"
+    bindtouchend="onTouchEnd"
+  ></canvas>
+
+  <view class="toolbar">
+    <view class="item-palette">
+      <view 
+        class="item-btn {{selectedItem === item.type ? 'active' : ''}} {{item.remaining <= 0 ? 'disabled' : ''}}"
+        wx:for="{{itemTypes}}" 
+        wx:key="type"
+        data-type="{{item.type}}"
+        bindtap="onSelectItem"
+      >
+        <text class="item-label">{{item.name}}</text>
+        <text class="item-count">x{{item.remaining}}</text>
+      </view>
+    </view>
+
+    <view class="dir-selector" wx:if="{{selectedItem}}">
+      <view class="dir-btn" data-dir="0" bindtap="onSelectDir">
+        <text class="dir-arrow up">↑</text>
+      </view>
+      <view class="dir-row">
+        <view class="dir-btn" data-dir="3" bindtap="onSelectDir">
+          <text class="dir-arrow left">←</text>
+        </view>
+        <view class="dir-btn" data-dir="1" bindtap="onSelectDir">
+          <text class="dir-arrow right">→</text>
+        </view>
+      </view>
+      <view class="dir-btn" data-dir="2" bindtap="onSelectDir">
+        <text class="dir-arrow down">↓</text>
+      </view>
+    </view>
+
+    <view class="action-bar">
+      <view class="action-btn launch" bindtap="onLaunch">发射</view>
+      <view class="action-btn reset" bindtap="onReset">重置</view>
+      <view class="action-btn clear" bindtap="onClear">清空</view>
+      <view class="action-btn back" bindtap="onBack">返回</view>
+    </view>
+  </view>
+
+  <!-- 结果弹窗 -->
+  <view class="result-overlay" wx:if="{{showResult}}">
+    <view class="result-card {{result}}">
+      <text class="result-title">{{result === 'success' ? '恭喜过关!' : '差一点!'}}</text>
+      <view class="result-stars" wx:if="{{result === 'success'}}">
+        <text class="star active" wx:for="{{3}}" wx:key="*this">★</text>
+      </view>
+      <view class="result-btns">
+        <view class="result-btn primary" wx:if="{{result === 'success'}}" bindtap="onNextLevel">下一关</view>
+        <view class="result-btn" bindtap="onRetry">重试</view>
+        <view class="result-btn" bindtap="onBack">返回</view>
+      </view>
+    </view>
+  </view>
+</view>
