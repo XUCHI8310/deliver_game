@@ -81,15 +81,27 @@ const THEME = {
   startStroke:  '#388e3c',
   goal:         '#f44336',
   goalStroke:   '#d32f2f',
-  cargo:        '#ffc107',
-  cargoStroke:  '#ff9800',
-  cargoTrail:   'rgba(255,193,7,0.3)',
-  conveyor:     '#2196f3',
-  conveyorBg:   'rgba(33,150,243,0.15)',
-  spring:       '#ff5722',
-  springBg:     'rgba(255,87,34,0.15)',
-  slope:        '#9c27b0',
-  slopeBg:      'rgba(156,39,176,0.15)',
+  cargo:        '#c8a46e',   // 牛皮纸箱主色
+  cargoStroke:  '#8b6914',   // 纸箱边框
+  cargoTape:    '#e8d5a0',   // 封箱胶带
+  cargoDetail:  '#a07840',   // 瓦楞纹
+  cargoTrail:   'rgba(200,164,110,0.3)',
+  // 传送带 - 漫画坦克履带
+  conveyor:     '#5a5a6a',   // 履带金属色
+  conveyorArrow:'#2196f3',   // 方向箭头蓝
+  conveyorWheel:'#3a3a4a',   // 轮子深色
+  conveyorBg:   'rgba(90,90,106,0.1)',
+  // 弹簧 - 铁青色漫画弹簧
+  spring:       '#2d7d7d',   // 铁青色主色
+  springLight:  '#4aa0a0',   // 高光色
+  springDark:   '#1a5555',   // 暗部色
+  springBg:     'rgba(45,125,125,0.1)',
+  // 斜坡 - 木质等腰直角三角形
+  slope:        '#8b6914',   // 木质边框
+  slopeLight:   '#c8a050',   // 浅木色
+  slopeDark:    '#6b4e10',   // 深木色
+  slopeGrain:   '#a07830',   // 木纹线
+  slopeBg:      'rgba(139,105,20,0.1)',
   textPrimary:  '#333',
   textSecondary:'#888',
   highlight:    '#e91e63',
