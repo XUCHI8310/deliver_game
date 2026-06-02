@@ -1,0 +1,383 @@
+[
+  {
+    "id": "level_002",
+    "name": "绕墙而行",
+    "width": 8,
+    "height": 6,
+    "grid": [
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "wall",
+        "wall",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ]
+    ],
+    "start": {
+      "x": 0,
+      "y": 2
+    },
+    "startDir": 1,
+    "goal": {
+      "x": 7,
+      "y": 5
+    },
+    "items": {
+      "conveyor": 3,
+      "spring": 0,
+      "slope": 0
+    },
+    "updatedAt": "2026-06-02T09:34:58.622Z",
+    "createdAt": "2026-06-02T09:34:58.622Z"
+  },
+  {
+    "id": "level_001",
+    "name": "初识传送",
+    "width": 7,
+    "height": 5,
+    "grid": [
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ]
+    ],
+    "start": {
+      "x": 0,
+      "y": 2
+    },
+    "startDir": 1,
+    "goal": {
+      "x": 6,
+      "y": 4
+    },
+    "items": {
+      "conveyor": 2,
+      "spring": 0,
+      "slope": 0
+    },
+    "updatedAt": "2026-06-02T09:34:58.634Z",
+    "createdAt": "2026-06-02T09:34:58.634Z"
+  },
+  {
+    "id": "level_003",
+    "name": "斜坡初体验",
+    "width": 6,
+    "height": 6,
+    "grid": [
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "wall",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "wall",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "wall",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ]
+    ],
+    "start": {
+      "x": 0,
+      "y": 0
+    },
+    "startDir": 1,
+    "goal": {
+      "x": 5,
+      "y": 5
+    },
+    "items": {
+      "conveyor": 1,
+      "spring": 0,
+      "slope": 2
+    },
+    "updatedAt": "2026-06-02T09:34:58.638Z",
+    "createdAt": "2026-06-02T09:34:58.638Z"
+  },
+  {
+    "id": "level_004",
+    "name": "弹簧妙用",
+    "width": 6,
+    "height": 6,
+    "grid": [
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ]
+    ],
+    "start": {
+      "x": 0,
+      "y": 0
+    },
+    "startDir": 1,
+    "goal": {
+      "x": 5,
+      "y": 2
+    },
+    "items": {
+      "conveyor": 1,
+      "spring": 1,
+      "slope": 1
+    },
+    "updatedAt": "2026-06-02T09:34:58.640Z",
+    "createdAt": "2026-06-02T09:34:58.640Z"
+  },
+  {
+    "id": "level_005",
+    "name": "综合挑战",
+    "width": 8,
+    "height": 6,
+    "grid": [
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "wall",
+        "wall",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ],
+      [
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty",
+        "empty"
+      ]
+    ],
+    "start": {
+      "x": 0,
+      "y": 1
+    },
+    "startDir": 1,
+    "goal": {
+      "x": 7,
+      "y": 5
+    },
+    "items": {
+      "conveyor": 3,
+      "spring": 1,
+      "slope": 1
+    },
+    "updatedAt": "2026-06-02T09:34:58.642Z",
+    "createdAt": "2026-06-02T09:34:58.642Z"
+  }
+]

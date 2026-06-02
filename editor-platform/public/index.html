@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>快递到家 - 关卡设计平台</title>
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg: #0f0f23;
+  --bg2: #1a1a35;
+  --bg3: #242450;
+  --surface: #1e1e3a;
+  --surface2: #2a2a4a;
+  --border: #3a3a5a;
+  --text: #e0e0f0;
+  --text2: #9090b0;
+  --accent: #4a9eff;
+  --accent2: #3a7ecc;
+  --green: #4caf50;
+  --red: #f44336;
+  --orange: #ff9800;
+  --conveyor: #5a5a6a;
+  --conveyor-arrow: #2196f3;
+  --spring: #2d7d7d;
+  --spring-light: #4aa0a0;
+  --slope: #8b6914;
+  --slope-light: #c8a050;
+  --sidebar-w: 280px;
+  --toolbar-h: 72px;
+}
+html, body { width:100%; height:100%; overflow:hidden; font-family: 'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); }
+
+/* ===== LAYOUT ===== */
+#app { display:flex; width:100%; height:100%; }
+#sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w); max-width: var(--sidebar-w);
+  background: var(--bg2); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden; z-index: 10;
+}
+#main { flex:1; display:flex; flex-direction:column; min-width:0; }
+#canvas-wrap { flex:1; position:relative; overflow:hidden; background:var(--bg); }
+#canvas-wrap canvas { display:block; position:absolute; top:0; left:0; }
+#toolbar {
+  height: var(--toolbar-h); min-height: var(--toolbar-h);
+  background: var(--bg2); border-top: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 16px; gap: 8px;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar-header {
+  padding: 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.sidebar-header .logo { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+.sidebar-header .logo span { color: var(--accent); }
+.sidebar-section { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.sidebar-section h3 { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+/* Level list */
+#level-list-wrap { flex:1; overflow-y:auto; }
+#level-list { list-style: none; }
+#level-list li {
+  padding: 10px 16px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex; justify-content: space-between; align-items: center;
+  transition: background 0.15s;
+}
+#level-list li:hover { background: var(--surface); }
+#level-list li.active { background: var(--bg3); border-left: 3px solid var(--accent); }
+#level-list li .lv-name { font-size: 14px; font-weight: 500; }
+#level-list li .lv-meta { font-size: 11px; color: var(--text2); }
+#level-list li .lv-verified { color: var(--green); font-size: 11px; margin-left: 4px; }
+
+/* Inputs */
+.input-group { margin-bottom: 8px; }
+.input-group label { display:block; font-size:12px; color:var(--text2); margin-bottom:4px; }
+.input-group input, .input-group select {
+  width:100%; padding:6px 10px; background:var(--surface); border:1px solid var(--border);
+  border-radius:4px; color:var(--text); font-size:13px; outline:none;
+}
+.input-group input:focus { border-color: var(--accent); }
+.input-row { display:flex; gap:8px; }
+.input-row .input-group { flex:1; }
+
+/* Buttons */
+.btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:4px;
+  padding: 7px 14px; border:none; border-radius:4px; font-size:13px; font-weight:500;
+  cursor:pointer; transition: all 0.15s; color:#fff;
+}
+.btn:hover { filter: brightness(1.15); }
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); }
+.btn-success { background: var(--green); }
+.btn-danger { background: var(--red); }
+.btn-warning { background: var(--orange); }
+.btn-secondary { background: var(--surface2); border: 1px solid var(--border); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-block { width:100%; }
+.btn-group { display:flex; gap:6px; flex-wrap:wrap; }
+
+/* ===== TOOLBAR ===== */
+.tool-sep { width:1px; height:40px; background:var(--border); margin:0 6px; }
+.tool-btn {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  width:52px; height:52px; border:2px solid transparent; border-radius:6px;
+  background:var(--surface); cursor:pointer; transition:all 0.15s; position:relative;
+}
+.tool-btn:hover { background:var(--surface2); }
+.tool-btn.active { border-color:var(--accent); background:var(--bg3); }
+.tool-btn .tool-icon { font-size:20px; line-height:1; }
+.tool-btn .tool-label { font-size:9px; color:var(--text2); margin-top:2px; }
+
+/* Direction pad */
+.dir-pad { display:flex; gap:4px; margin-left:auto; align-items:center; }
+.dir-pad .dir-label { font-size:11px; color:var(--text2); margin-right:4px; }
+.dir-btn {
+  width:36px; height:36px; border:2px solid var(--border); border-radius:4px;
+  background:var(--surface); color:var(--text); font-size:16px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:all 0.15s;
+}
+.dir-btn:hover { background:var(--surface2); }
+.dir-btn.active { border-color:var(--accent); background:var(--bg3); color:var(--accent); }
+
+/* Test controls */
+.test-controls { display:flex; gap:6px; margin-left:12px; align-items:center; }
+.test-controls .step-info { font-size:12px; color:var(--text2); min-width:60px; text-align:center; }
+
+/* ===== TOAST ===== */
+#toast-container {
+  position:fixed; top:20px; right:20px; z-index:9999;
+  display:flex; flex-direction:column; gap:8px;
+}
+.toast {
+  padding:12px 20px; border-radius:6px; font-size:13px; font-weight:500;
+  color:#fff; animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.toast-success { background: #2e7d32; }
+.toast-error { background: #c62828; }
+.toast-info { background: #1565c0; }
+@keyframes toastIn { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+@keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateY(-10px); } }
+
+/* ===== RESULT OVERLAY ===== */
+#result-overlay {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  background:rgba(15,15,35,0.92); border:2px solid var(--border); border-radius:12px;
+  padding:32px 48px; text-align:center; display:none; z-index:50;
+  backdrop-filter: blur(6px);
+}
+#result-overlay.show { display:block; animation: fadeIn 0.3s ease; }
+#result-overlay .result-icon { font-size:48px; margin-bottom:8px; }
+#result-overlay .result-text { font-size:22px; font-weight:700; margin-bottom:4px; }
+#result-overlay .result-steps { font-size:14px; color:var(--text2); }
+@keyframes fadeIn { from { opacity:0; transform:translate(-50%,-50%) scale(0.9); } to { opacity:1; transform:translate(-50%,-50%) scale(1); } }
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:#555; }
+
+/* ===== MODAL ===== */
+.modal-backdrop {
+  position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100;
+  display:flex; align-items:center; justify-content:center;
+}
+.modal-backdrop.hidden { display:none; }
+.modal {
+  background:var(--bg2); border:1px solid var(--border); border-radius:8px;
+  padding:24px; min-width:340px; max-width:440px;
+}
+.modal h2 { font-size:18px; margin-bottom:16px; }
+.modal .btn-group { margin-top:16px; justify-content:flex-end; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo"><span>快递到家</span> 编辑器</div>
+    </div>
+
+    <!-- Level controls -->
+    <div class="sidebar-section">
+      <h3>关卡设置</h3>
+      <div class="input-group">
+        <label>关卡名称</label>
+        <input type="text" id="level-name" placeholder="输入关卡名称..." />
+      </div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>宽度 (4-15)</label>
+          <input type="number" id="grid-width" min="4" max="15" value="7" />
+        </div>
+        <div class="input-group">
+          <label>高度 (4-12)</label>
+          <input type="number" id="grid-height" min="4" max="12" value="5" />
+        </div>
+      </div>
+      <div class="btn-group" style="margin-top:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="applyGridSize()">应用尺寸</button>
+        <button class="btn btn-secondary btn-sm" onclick="clearGrid()">清空网格</button>
+      </div>
+    </div>
+
+    <!-- Item budget -->
+    <div class="sidebar-section">
+      <h3>可用物品数量</h3>
+      <div class="input-row">
+        <div class="input-group">
+          <label style="color:var(--conveyor-arrow)">传送带</label>
+          <input type="number" id="item-conveyor" min="0" max="20" value="0" />
+        </div>
+        <div class="input-group">
+          <label style="color:var(--spring-light)">弹簧</label>
+          <input type="number" id="item-spring" min="0" max="20" value="0" />
+        </div>
+        <div class="input-group">
+          <label style="color:var(--slope-light)">斜坡</label>
+          <input type="number" id="item-slope" min="0" max="20" value="0" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="sidebar-section">
+      <div class="btn-group">
+        <button class="btn btn-primary btn-sm" onclick="newLevel()" title="新建关卡">新建</button>
+        <button class="btn btn-success btn-sm" onclick="saveLevel()" title="Ctrl+S">保存</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteLevel()" title="删除当前关卡">删除</button>
+      </div>
+      <div class="btn-group" style="margin-top:6px;">
+        <button class="btn btn-warning btn-sm" onclick="pushLevels()" title="Ctrl+P">推送到小程序</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportLevels()">导出</button>
+      </div>
+    </div>
+
+    <!-- Level list -->
+    <div class="sidebar-section" style="flex-shrink:0;">
+      <h3>关卡列表</h3>
+    </div>
+    <div id="level-list-wrap">
+      <ul id="level-list"></ul>
+    </div>
+
+    <!-- Keyboard shortcuts -->
+    <div class="sidebar-section" style="flex-shrink:0; margin-top:auto; border-top:1px solid var(--border); border-bottom:none;">
+      <h3>快捷键</h3>
+      <div style="font-size:11px; color:var(--text2); line-height:1.8;">
+        <div><kbd style="background:var(--surface);padding:1px 5px;border-radius:3px;font-size:10px;">Ctrl+S</kbd> 保存关卡</div>
+        <div><kbd style="background:var(--surface);padding:1px 5px;border-radius:3px;font-size:10px;">Ctrl+T</kbd> 测试关卡</div>
+        <div><kbd style="background:var(--surface);padding:1px 5px;border-radius:3px;font-size:10px;">Ctrl+P</kbd> 推送关卡</div>
+        <div><kbd style="background:var(--surface);padding:1px 5px;border-radius:3px;font-size:10px;">1-7</kbd> 快速选工具</div>
+        <div><kbd style="background:var(--surface);padding:1px 5px;border-radius:3px;font-size:10px;">右键</kbd> 旋转物品</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN AREA -->
+  <div id="main">
+    <div id="canvas-wrap">
+      <canvas id="editor-canvas"></canvas>
+      <div id="result-overlay">
+        <div class="result-icon" id="result-icon"></div>
+        <div class="result-text" id="result-text"></div>
+        <div class="result-steps" id="result-steps"></div>
+      </div>
+    </div>
+
+    <!-- BOTTOM TOOLBAR -->
+    <div id="toolbar">
+      <!-- Cell tools -->
+      <div class="tool-btn active" data-tool="eraser" onclick="selectTool('eraser')" title="橡皮擦">
+        <span class="tool-icon">&#x2716;</span><span class="tool-label">橡皮擦</span>
+      </div>
+      <div class="tool-btn" data-tool="wall" onclick="selectTool('wall')" title="墙壁">
+        <span class="tool-icon">&#x25A3;</span><span class="tool-label">墙壁</span>
+      </div>
+      <div class="tool-btn" data-tool="start" onclick="selectTool('start')" title="起点">
+        <span class="tool-icon" style="color:var(--green)">&#x25CF;</span><span class="tool-label">起点</span>
+      </div>
+      <div class="tool-btn" data-tool="goal" onclick="selectTool('goal')" title="终点">
+        <span class="tool-icon" style="color:var(--red)">&#x2605;</span><span class="tool-label">终点</span>
+      </div>
+
+      <div class="tool-sep"></div>
+
+      <!-- Item tools -->
+      <div class="tool-btn" data-tool="conveyor" onclick="selectTool('conveyor')" title="传送带">
+        <span class="tool-icon" style="color:var(--conveyor-arrow)">&#x21E5;</span><span class="tool-label">传送带</span>
+      </div>
+      <div class="tool-btn" data-tool="spring" onclick="selectTool('spring')" title="弹簧">
+        <span class="tool-icon" style="color:var(--spring-light)">&#x2307;</span><span class="tool-label">弹簧</span>
+      </div>
+      <div class="tool-btn" data-tool="slope" onclick="selectTool('slope')" title="斜坡">
+        <span class="tool-icon" style="color:var(--slope-light)">&#x2571;</span><span class="tool-label">斜坡</span>
+      </div>
+
+      <div class="tool-sep"></div>
+
+      <!-- Direction pad (only shown for directional tools) -->
+      <div class="dir-pad" id="dir-pad">
+        <span class="dir-label">朝向:</span>
+        <button class="dir-btn active" data-dir="0" onclick="selectDir(0)">&#x2191;</button>
+        <button class="dir-btn" data-dir="1" onclick="selectDir(1)">&#x2192;</button>
+        <button class="dir-btn" data-dir="2" onclick="selectDir(2)">&#x2193;</button>
+        <button class="dir-btn" data-dir="3" onclick="selectDir(3)">&#x2190;</button>
+      </div>
+
+      <div class="tool-sep"></div>
+
+      <!-- Test controls -->
+      <div class="test-controls">
+        <button class="btn btn-primary btn-sm" onclick="testLevel()" title="Ctrl+T" id="btn-test">测试</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetTest()" id="btn-reset">重置</button>
+        <span class="step-info" id="step-info"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script>
+// ========================================================================
+// CONSTANTS
+// ========================================================================
+const DIR = { UP:0, RIGHT:1, DOWN:2, LEFT:3 };
+const DIR_DELTA = [
+  { dx:0, dy:-1 },  // UP
+  { dx:1, dy:0 },   // RIGHT
+  { dx:0, dy:1 },   // DOWN
+  { dx:-1, dy:0 }   // LEFT
+];
+const DIR_ARROWS = ['\u2191','\u2192','\u2193','\u2190'];
+const CELL = { EMPTY:'empty', WALL:'wall', START:'start', GOAL:'goal' };
+const ITEM = { CONVEYOR:'conveyor', SPRING:'spring', SLOPE:'slope' };
+const MAX_STEPS = 200;
+const ANIM_SPEED = 120; // ms per step
+
+const THEME = {
+  bg:'#0f0f23', gridBg:'#f5f5f0', gridLine:'#ddd',
+  wall:'#4a4a6a', wallStroke:'#3a3a5a',
+  start:'#4caf50', startStroke:'#388e3c',
+  goal:'#f44336', goalStroke:'#d32f2f',
+  cargo:'#c8a46e', cargoStroke:'#8b6914', cargoTape:'#e8d5a0',
+  cargoDetail:'#a07840', cargoTrail:'rgba(200,164,110,0.3)',
+  conveyor:'#5a5a6a', conveyorArrow:'#2196f3', conveyorWheel:'#3a3a4a',
+  spring:'#2d7d7d', springLight:'#4aa0a0', springDark:'#1a5555',
+  slope:'#8b6914', slopeLight:'#c8a050', slopeDark:'#6b4e10', slopeGrain:'#a07830',
+  highlight:'#e91e63', success:'#4caf50', fail:'#f44336',
+  cellHover:'rgba(255,255,255,0.3)'
+};
+
+// ========================================================================
+// EDITOR STATE
+// ========================================================================
+let state = {
+  // Current level data
+  id: null,
+  name: '',
+  width: 7,
+  height: 5,
+  grid: [],       // 2D array [row][col] of cell types
+  start: { x:0, y:2 },
+  startDir: 1,
+  goal: { x:6, y:4 },
+  items: { conveyor:0, spring:0, slope:0 },
+  placedItems: {},  // "x,y" -> { type, dir }
+
+  // Editor state
+  currentTool: 'eraser',
+  currentDir: 0,
+  hoverCell: null,   // {x,y} or null
+  levelList: [],
+  activeLevelId: null,
+
+  // Test / simulation state
+  testing: false,
+  cargo: null,       // {x,y,dir}
+  trail: [],
+  simSteps: 0,
+  simResult: null,   // null | 'success' | 'fail'
+  animTimer: null,
+  animating: false
+};
+
+// ========================================================================
+// CANVAS SETUP
+// ========================================================================
+const canvasWrap = document.getElementById('canvas-wrap');
+const canvas = document.getElementById('editor-canvas');
+const ctx = canvas.getContext('2d');
+let dpr = window.devicePixelRatio || 1;
+let canvasW = 0, canvasH = 0;
+let cellSize = 0, offsetX = 0, offsetY = 0, gridW = 0, gridH = 0;
+
+function resizeCanvas() {
+  const rect = canvasWrap.getBoundingClientRect();
+  canvasW = rect.width;
+  canvasH = rect.height;
+  dpr = window.devicePixelRatio || 1;
+  canvas.width = canvasW * dpr;
+  canvas.height = canvasH * dpr;
+  canvas.style.width = canvasW + 'px';
+  canvas.style.height = canvasH + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  fitGrid();
+  render();
+}
+
+function fitGrid() {
+  const padTop = 28, padLeft = 28, padBottom = 20, padRight = 20;
+  const maxW = canvasW - padLeft - padRight;
+  const maxH = canvasH - padTop - padBottom;
+  cellSize = Math.floor(Math.min(maxW / state.width, maxH / state.height));
+  if (cellSize < 20) cellSize = 20;
+  if (cellSize > 80) cellSize = 80;
+  gridW = cellSize * state.width;
+  gridH = cellSize * state.height;
+  offsetX = Math.floor(padLeft + (maxW - gridW) / 2);
+  offsetY = Math.floor(padTop + (maxH - gridH) / 2);
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+// ========================================================================
+// GRID HELPERS
+// ========================================================================
+function initGrid(w, h) {
+  state.width = w;
+  state.height = h;
+  state.grid = [];
+  for (let y = 0; y < h; y++) {
+    state.grid[y] = [];
+    for (let x = 0; x < w; x++) {
+      state.grid[y][x] = CELL.EMPTY;
+    }
+  }
+  state.placedItems = {};
+  fitGrid();
+}
+
+function getCell(x, y) {
+  if (y < 0 || y >= state.height || x < 0 || x >= state.width) return CELL.WALL;
+  return state.grid[y][x];
+}
+
+function isInBounds(x, y) {
+  return x >= 0 && x < state.width && y >= 0 && y < state.height;
+}
+
+function pixelToGrid(px, py) {
+  const gx = Math.floor((px - offsetX) / cellSize);
+  const gy = Math.floor((py - offsetY) / cellSize);
+  if (gx < 0 || gy < 0 || gx >= state.width || gy >= state.height) return null;
+  return { x: gx, y: gy };
+}
+
+// ========================================================================
+// RENDERING
+// ========================================================================
+function render() {
+  ctx.clearRect(0, 0, canvasW, canvasH);
+  ctx.fillStyle = THEME.bg;
+  ctx.fillRect(0, 0, canvasW, canvasH);
+
+  // Level info header
+  const levelName = state.name || document.getElementById('level-name').value || '未命名关卡';
+  ctx.fillStyle = '#555';
+  ctx.font = '13px "Segoe UI","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(`${levelName}  |  ${state.width} x ${state.height}`, 12, 8);
+
+  // Item counts
+  const placed = Object.values(state.placedItems);
+  const cCount = placed.filter(i => i.type === 'conveyor').length;
+  const sCount = placed.filter(i => i.type === 'spring').length;
+  const slCount = placed.filter(i => i.type === 'slope').length;
+  ctx.textAlign = 'right';
+  ctx.fillText(
+    `已放置: ${cCount} 传送带 / ${sCount} 弹簧 / ${slCount} 斜坡`,
+    canvasW - 12, 8
+  );
+
+  drawGrid();
+  drawCells();
+  drawPlacedItems();
+  if (state.testing) {
+    drawTrail(state.trail);
+    drawCargo(state.cargo, state.simResult);
+  }
+  drawHover();
+}
+
+function drawGrid() {
+  const cs = cellSize;
+  // Grid background
+  ctx.fillStyle = THEME.gridBg;
+  ctx.fillRect(offsetX, offsetY, gridW, gridH);
+
+  // Grid lines
+  ctx.strokeStyle = THEME.gridLine;
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x <= state.width; x++) {
+    const px = offsetX + x * cs;
+    ctx.beginPath();
+    ctx.moveTo(px, offsetY);
+    ctx.lineTo(px, offsetY + gridH);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= state.height; y++) {
+    const py = offsetY + y * cs;
+    ctx.beginPath();
+    ctx.moveTo(offsetX, py);
+    ctx.lineTo(offsetX + gridW, py);
+    ctx.stroke();
+  }
+
+  // Coordinate labels - columns (top)
+  ctx.fillStyle = '#666';
+  ctx.font = `${Math.min(11, cs * 0.22)}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  for (let x = 0; x < state.width; x++) {
+    ctx.fillText(x, offsetX + x * cs + cs / 2, offsetY - 4);
+  }
+  // Coordinate labels - rows (left)
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (let y = 0; y < state.height; y++) {
+    ctx.fillText(y, offsetX - 6, offsetY + y * cs + cs / 2);
+  }
+
+  // Grid outer border
+  ctx.strokeStyle = '#555';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(offsetX - 0.5, offsetY - 0.5, gridW + 1, gridH + 1);
+}
+
+function drawCells() {
+  const cs = cellSize;
+  for (let y = 0; y < state.height; y++) {
+    for (let x = 0; x < state.width; x++) {
+      const cell = state.grid[y][x];
+      const px = offsetX + x * cs;
+      const py = offsetY + y * cs;
+      drawCell(cell, px, py, cs);
+    }
+  }
+  // Draw start and goal markers
+  drawStart(state.start.x, state.start.y, state.startDir);
+  drawGoal(state.goal.x, state.goal.y);
+}
+
+function drawCell(type, px, py, cs) {
+  const inset = 1;
+  switch (type) {
+    case CELL.WALL:
+      ctx.fillStyle = THEME.wall;
+      ctx.fillRect(px + inset, py + inset, cs - inset*2, cs - inset*2);
+      // Brick pattern
+      ctx.strokeStyle = THEME.wallStroke;
+      ctx.lineWidth = 0.5;
+      const half = cs / 2;
+      ctx.beginPath();
+      ctx.moveTo(px + inset, py + half);
+      ctx.lineTo(px + cs - inset, py + half);
+      ctx.moveTo(px + half, py + inset);
+      ctx.lineTo(px + half, py + half);
+      ctx.moveTo(px + inset, py + half);
+      ctx.lineTo(px + inset, py + cs - inset);
+      ctx.stroke();
+      break;
+  }
+}
+
+function drawStart(x, y, dir) {
+  const cs = cellSize;
+  const cx = offsetX + x * cs + cs / 2;
+  const cy = offsetY + y * cs + cs / 2;
+  const r = cs * 0.35;
+  ctx.fillStyle = THEME.start;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = THEME.startStroke;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${cs * 0.35}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(DIR_ARROWS[dir], cx, cy);
+}
+
+function drawGoal(x, y) {
+  const cs = cellSize;
+  const cx = offsetX + x * cs + cs / 2;
+  const cy = offsetY + y * cs + cs / 2;
+  const r = cs * 0.35;
+  ctx.fillStyle = THEME.goal;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r);
+  ctx.lineTo(cx + r, cy);
+  ctx.lineTo(cx, cy + r);
+  ctx.lineTo(cx - r, cy);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = THEME.goalStroke;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = '#fff';
+  ctx.font = `${cs * 0.3}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('\u2605', cx, cy);
+}
+
+// ===== ITEM DRAWING =====
+
+function drawPlacedItems() {
+  const cs = cellSize;
+  Object.keys(state.placedItems).forEach(key => {
+    const [x, y] = key.split(',').map(Number);
+    const item = state.placedItems[key];
+    const px = offsetX + x * cs;
+    const py = offsetY + y * cs;
+    drawItem(item.type, item.dir, px, py, cs);
+  });
+}
+
+function drawItem(type, dir, px, py, cs) {
+  switch (type) {
+    case ITEM.CONVEYOR: drawConveyor(dir, px, py, cs); break;
+    case ITEM.SPRING:   drawSpring(dir, px, py, cs); break;
+    case ITEM.SLOPE:    drawSlope(dir, px, py, cs); break;
+  }
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+function drawConveyor(dir, px, py, cs) {
+  const inset = cs * 0.06;
+  const x0 = px + inset, y0 = py + inset;
+  const w = cs - inset * 2, h = cs - inset * 2;
+  const wheelR = cs * 0.12;
+
+  // Track body
+  ctx.fillStyle = THEME.conveyor;
+  roundRect(x0, y0, w, h, cs * 0.1);
+  ctx.fill();
+
+  // Track links
+  const linkCount = 5;
+  const linkW = w / linkCount;
+  ctx.strokeStyle = '#4a4a5a';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < linkCount; i++) {
+    const lx = x0 + linkW * i;
+    ctx.beginPath();
+    ctx.moveTo(lx, y0 + h * 0.15);
+    ctx.lineTo(lx, y0 + h * 0.85);
+    ctx.stroke();
+  }
+
+  // Teeth
+  ctx.fillStyle = '#4a4a5a';
+  const teethCount = 8;
+  const teethW = w / teethCount;
+  for (let i = 0; i < teethCount; i++) {
+    ctx.fillRect(x0 + i * teethW + teethW * 0.2, y0, teethW * 0.6, h * 0.08);
+    ctx.fillRect(x0 + i * teethW + teethW * 0.2, y0 + h * 0.92, teethW * 0.6, h * 0.08);
+  }
+
+  // Drive wheels
+  ctx.fillStyle = THEME.conveyorWheel;
+  ctx.strokeStyle = '#2a2a3a';
+  ctx.lineWidth = 1.5;
+  [x0 + wheelR + 2, x0 + w - wheelR - 2].forEach(wx => {
+    const wy = y0 + h / 2;
+    ctx.beginPath();
+    ctx.arc(wx, wy, wheelR, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    // Axle cross
+    ctx.strokeStyle = '#5a5a6a';
+    ctx.lineWidth = 1;
+    const cr = wheelR * 0.5;
+    ctx.beginPath();
+    ctx.moveTo(wx - cr, wy); ctx.lineTo(wx + cr, wy);
+    ctx.moveTo(wx, wy - cr); ctx.lineTo(wx, wy + cr);
+    ctx.stroke();
+    ctx.strokeStyle = '#2a2a3a';
+    ctx.lineWidth = 1.5;
+  });
+
+  // Direction arrow (blue)
+  ctx.save();
+  ctx.translate(px + cs / 2, py + cs / 2);
+  ctx.rotate(dir * Math.PI / 2);
+  ctx.fillStyle = THEME.conveyorArrow;
+  ctx.strokeStyle = THEME.conveyorArrow;
+  ctx.lineWidth = cs * 0.06;
+  const arrowLen = cs * 0.2;
+  ctx.beginPath();
+  ctx.moveTo(-arrowLen, 0);
+  ctx.lineTo(arrowLen, 0);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(arrowLen, 0);
+  ctx.lineTo(arrowLen - cs * 0.08, -cs * 0.06);
+  ctx.lineTo(arrowLen - cs * 0.08, cs * 0.06);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Outline
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = cs * 0.04;
+  roundRect(x0, y0, w, h, cs * 0.1);
+  ctx.stroke();
+}
+
+function drawSpring(dir, px, py, cs) {
+  const inset = cs * 0.08;
+  const cx = px + cs / 2;
+  const top = py + inset;
+  const bottom = py + cs - inset;
+  const springH = bottom - top;
+  const coilCount = 5;
+  const coilW = cs * 0.32;
+
+  // Base
+  const baseH = cs * 0.12;
+  ctx.fillStyle = THEME.springDark;
+  ctx.fillRect(px + cs * 0.2, bottom - baseH, cs * 0.6, baseH);
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = cs * 0.03;
+  ctx.strokeRect(px + cs * 0.2, bottom - baseH, cs * 0.6, baseH);
+
+  // Coil spring (zigzag)
+  const coilTop = top + cs * 0.08;
+  const coilBottom = bottom - baseH - cs * 0.02;
+  const coilH = coilBottom - coilTop;
+  const step = coilH / coilCount;
+
+  ctx.strokeStyle = THEME.spring;
+  ctx.lineWidth = cs * 0.07;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, coilTop);
+  for (let i = 0; i < coilCount; i++) {
+    const y1 = coilTop + step * i + step * 0.25;
+    const y2 = coilTop + step * i + step * 0.75;
+    ctx.lineTo(cx + coilW, y1);
+    ctx.lineTo(cx - coilW, y2);
+  }
+  ctx.lineTo(cx, coilBottom);
+  ctx.stroke();
+
+  // Highlight
+  ctx.strokeStyle = THEME.springLight;
+  ctx.lineWidth = cs * 0.03;
+  ctx.beginPath();
+  ctx.moveTo(cx + 1, coilTop);
+  for (let i = 0; i < coilCount; i++) {
+    const y1 = coilTop + step * i + step * 0.25;
+    const y2 = coilTop + step * i + step * 0.75;
+    ctx.lineTo(cx + coilW + 1, y1);
+    ctx.lineTo(cx - coilW + 1, y2);
+  }
+  ctx.lineTo(cx + 1, coilBottom);
+  ctx.stroke();
+
+  // Top plate
+  const plateH = cs * 0.08;
+  ctx.fillStyle = THEME.spring;
+  ctx.fillRect(cx - coilW - cs * 0.02, coilTop - plateH, coilW * 2 + cs * 0.04, plateH);
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = cs * 0.03;
+  ctx.strokeRect(cx - coilW - cs * 0.02, coilTop - plateH, coilW * 2 + cs * 0.04, plateH);
+
+  // Bounce arrow (upward)
+  ctx.fillStyle = THEME.springLight;
+  ctx.strokeStyle = THEME.springLight;
+  ctx.lineWidth = cs * 0.04;
+  const arrowBase = coilTop - plateH - cs * 0.02;
+  const arrowTip = arrowBase - cs * 0.12;
+  ctx.beginPath();
+  ctx.moveTo(cx, arrowBase);
+  ctx.lineTo(cx, arrowTip);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx, arrowTip);
+  ctx.lineTo(cx - cs * 0.05, arrowTip + cs * 0.06);
+  ctx.lineTo(cx + cs * 0.05, arrowTip + cs * 0.06);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawSlope(dir, px, py, cs) {
+  const inset = cs * 0.06;
+  const x0 = px + inset, y0 = py + inset;
+  const w = cs - inset * 2, h = cs - inset * 2;
+
+  // Triangle vertices based on direction
+  let p1, p2, p3;
+  switch (dir) {
+    case 0: // UP
+      p1 = { x: x0, y: y0 + h };
+      p2 = { x: x0 + w, y: y0 + h };
+      p3 = { x: x0 + w, y: y0 };
+      break;
+    case 1: // RIGHT
+      p1 = { x: x0, y: y0 + h };
+      p2 = { x: x0 + w, y: y0 + h };
+      p3 = { x: x0 + w, y: y0 };
+      break;
+    case 2: // DOWN
+      p1 = { x: x0, y: y0 };
+      p2 = { x: x0 + w, y: y0 };
+      p3 = { x: x0 + w, y: y0 + h };
+      break;
+    case 3: // LEFT
+      p1 = { x: x0, y: y0 };
+      p2 = { x: x0, y: y0 + h };
+      p3 = { x: x0 + w, y: y0 + h };
+      break;
+  }
+
+  // Fill with light wood color
+  ctx.fillStyle = THEME.slopeLight;
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.lineTo(p3.x, p3.y);
+  ctx.closePath();
+  ctx.fill();
+
+  // Wood grain
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.lineTo(p3.x, p3.y);
+  ctx.closePath();
+  ctx.clip();
+
+  ctx.strokeStyle = THEME.slopeGrain;
+  ctx.lineWidth = 0.8;
+  ctx.globalAlpha = 0.5;
+  const grainSpacing = cs * 0.12;
+  const grainCount = Math.ceil((w + h) / grainSpacing);
+  for (let i = 0; i < grainCount; i++) {
+    const off = i * grainSpacing;
+    ctx.beginPath();
+    ctx.moveTo(x0 + off, y0);
+    ctx.lineTo(x0 + off - h * 0.3, y0 + h);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Knot
+  ctx.fillStyle = THEME.slopeDark;
+  ctx.globalAlpha = 0.3;
+  ctx.beginPath();
+  ctx.ellipse(x0 + w * 0.6, y0 + h * 0.6, cs * 0.04, cs * 0.025, 0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // Border
+  ctx.strokeStyle = THEME.slope;
+  ctx.lineWidth = cs * 0.04;
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.lineTo(p3.x, p3.y);
+  ctx.closePath();
+  ctx.stroke();
+
+  // Nails
+  ctx.fillStyle = '#888';
+  const nailR = cs * 0.025;
+  const nailPositions = [
+    { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 },
+    { x: (p2.x + p3.x) / 2, y: (p2.y + p3.y) / 2 },
+  ];
+  nailPositions.forEach(np => {
+    ctx.beginPath();
+    ctx.arc(np.x, np.y, nailR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#aaa';
+    ctx.beginPath();
+    ctx.arc(np.x - nailR * 0.3, np.y - nailR * 0.3, nailR * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#888';
+  });
+}
+
+// ===== TRAIL & CARGO =====
+
+function drawTrail(trail) {
+  if (!trail || trail.length < 2) return;
+  const cs = cellSize;
+  ctx.strokeStyle = THEME.cargoTrail;
+  ctx.lineWidth = cs * 0.15;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(offsetX + trail[0].x * cs + cs / 2, offsetY + trail[0].y * cs + cs / 2);
+  for (let i = 1; i < trail.length; i++) {
+    ctx.lineTo(offsetX + trail[i].x * cs + cs / 2, offsetY + trail[i].y * cs + cs / 2);
+  }
+  ctx.stroke();
+}
+
+function drawCargo(cargo, resultState) {
+  if (!cargo) return;
+  const cs = cellSize;
+  const cx = offsetX + cargo.x * cs + cs / 2;
+  const cy = offsetY + cargo.y * cs + cs / 2;
+  const size = cs * 0.65;
+  const half = size / 2;
+  const x0 = cx - half, y0 = cy - half;
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.fillRect(x0 + 3, y0 + 3, size, size);
+
+  let boxColor = THEME.cargo;
+  if (resultState === 'success') boxColor = THEME.success;
+  if (resultState === 'fail') boxColor = THEME.fail;
+
+  // Box body
+  ctx.fillStyle = boxColor;
+  ctx.fillRect(x0, y0, size, size);
+
+  // Corrugation lines
+  if (!resultState) {
+    ctx.strokeStyle = THEME.cargoDetail;
+    ctx.lineWidth = 0.5;
+    ctx.globalAlpha = 0.4;
+    const lineCount = 6;
+    for (let i = 1; i < lineCount; i++) {
+      const ly = y0 + (size / lineCount) * i;
+      ctx.beginPath();
+      ctx.moveTo(x0 + 2, ly);
+      ctx.lineTo(x0 + size - 2, ly);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Tape
+  if (!resultState) {
+    ctx.fillStyle = THEME.cargoTape;
+    ctx.globalAlpha = 0.7;
+    const tapeW = size * 0.15;
+    ctx.fillRect(cx - tapeW / 2, y0, tapeW, size);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#fff';
+    ctx.globalAlpha = 0.2;
+    ctx.fillRect(cx - tapeW / 2 + 1, y0, tapeW * 0.3, size);
+    ctx.globalAlpha = 1;
+  }
+
+  // Box border
+  ctx.strokeStyle = THEME.cargoStroke;
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(x0, y0, size, size);
+
+  // Fragile mark
+  if (!resultState) {
+    const iconSize = size * 0.2;
+    const ix = x0 + size - iconSize - 3;
+    const iy = y0 + size - iconSize - 2;
+    ctx.strokeStyle = THEME.cargoStroke;
+    ctx.lineWidth = 0.8;
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(ix + iconSize * 0.2, iy);
+    ctx.lineTo(ix + iconSize * 0.8, iy);
+    ctx.lineTo(ix + iconSize * 0.7, iy + iconSize * 0.8);
+    ctx.lineTo(ix + iconSize * 0.3, iy + iconSize * 0.8);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(ix + iconSize * 0.5, iy + iconSize * 0.15);
+    ctx.lineTo(ix + iconSize * 0.4, iy + iconSize * 0.45);
+    ctx.lineTo(ix + iconSize * 0.55, iy + iconSize * 0.55);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawHover() {
+  if (!state.hoverCell || state.testing) return;
+  const cs = cellSize;
+  const gx = state.hoverCell.x, gy = state.hoverCell.y;
+  const px = offsetX + gx * cs;
+  const py = offsetY + gy * cs;
+
+  // Highlight border
+  ctx.strokeStyle = THEME.highlight;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 3]);
+  ctx.strokeRect(px + 1, py + 1, cs - 2, cs - 2);
+  ctx.setLineDash([]);
+
+  // Info tooltip near cursor
+  const key = `${gx},${gy}`;
+  const cell = state.grid[gy][gx];
+  const item = state.placedItems[key];
+  let info = `(${gx}, ${gy})`;
+  if (gx === state.start.x && gy === state.start.y) info += ' \u8d77\u70b9';
+  if (gx === state.goal.x && gy === state.goal.y) info += ' \u7ec8\u70b9';
+  if (cell === CELL.WALL) info += ' \u5899\u58c1';
+  if (item) {
+    const names = { conveyor:'\u4f20\u9001\u5e26', spring:'\u5f39\u7c27', slope:'\u659c\u5761' };
+    info += ` ${names[item.type] || item.type} ${DIR_ARROWS[item.dir]}`;
+  }
+
+  // Draw tooltip background
+  ctx.font = '12px monospace';
+  const tw = ctx.measureText(info).width + 12;
+  const th = 22;
+  let tx = px + cs + 4;
+  let ty = py;
+  if (tx + tw > canvasW - 8) tx = px - tw - 4;
+  if (ty + th > canvasH - 8) ty = py - th;
+
+  ctx.fillStyle = 'rgba(15,15,35,0.88)';
+  ctx.beginPath();
+  ctx.moveTo(tx + 4, ty);
+  ctx.lineTo(tx + tw - 4, ty);
+  ctx.arcTo(tx + tw, ty, tx + tw, ty + 4, 4);
+  ctx.lineTo(tx + tw, ty + th - 4);
+  ctx.arcTo(tx + tw, ty + th, tx + tw - 4, ty + th, 4);
+  ctx.lineTo(tx + 4, ty + th);
+  ctx.arcTo(tx, ty + th, tx, ty + th - 4, 4);
+  ctx.lineTo(tx, ty + 4);
+  ctx.arcTo(tx, ty, tx + 4, ty, 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = '#ddd';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(info, tx + 6, ty + th / 2);
+}
+
+// ========================================================================
+// TOOLS & INTERACTION
+// ========================================================================
+
+function selectTool(tool) {
+  state.currentTool = tool;
+  document.querySelectorAll('.tool-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tool === tool);
+  });
+  // Show/hide direction pad for item tools
+  const isItemTool = [ITEM.CONVEYOR, ITEM.SPRING, ITEM.SLOPE].includes(tool);
+  document.getElementById('dir-pad').style.opacity = isItemTool ? '1' : '0.35';
+}
+
+function selectDir(dir) {
+  state.currentDir = dir;
+  document.querySelectorAll('.dir-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.dir) === dir);
+  });
+}
+
+function applyToolToCell(gx, gy) {
+  const tool = state.currentTool;
+  const dir = state.currentDir;
+
+  if (state.testing) return;
+
+  switch (tool) {
+    case 'eraser':
+      // Remove item first, then clear cell
+      delete state.placedItems[`${gx},${gy}`];
+      // Don't erase start/goal from grid (they're stored separately), but reset cell to empty
+      if (state.start.x === gx && state.start.y === gy) {
+        // Move start away - just reset to empty and user must place again
+      }
+      if (state.goal.x === gx && state.goal.y === gy) {
+        // Same
+      }
+      state.grid[gy][gx] = CELL.EMPTY;
+      break;
+
+    case 'wall':
+      delete state.placedItems[`${gx},${gy}`];
+      state.grid[gy][gx] = CELL.WALL;
+      break;
+
+    case 'start':
+      // Remove old start cell marking
+      for (let yy = 0; yy < state.height; yy++)
+        for (let xx = 0; xx < state.width; xx++)
+          if (state.grid[yy][xx] === CELL.START) state.grid[yy][xx] = CELL.EMPTY;
+      state.grid[gy][gx] = CELL.EMPTY; // Start stored in state.start, not grid
+      state.start = { x: gx, y: gy };
+      state.startDir = dir;
+      break;
+
+    case 'goal':
+      for (let yy = 0; yy < state.height; yy++)
+        for (let xx = 0; xx < state.width; xx++)
+          if (state.grid[yy][xx] === CELL.GOAL) state.grid[yy][xx] = CELL.EMPTY;
+      state.grid[gy][gx] = CELL.EMPTY;
+      state.goal = { x: gx, y: gy };
+      break;
+
+    case ITEM.CONVEYOR:
+    case ITEM.SPRING:
+    case ITEM.SLOPE:
+      // Place or rotate item
+      const key = `${gx},${gy}`;
+      if (state.placedItems[key] && state.placedItems[key].type === tool) {
+        // Same tool already placed here - rotate
+        state.placedItems[key].dir = (state.placedItems[key].dir + 1) % 4;
+      } else {
+        // Can only place on empty cells that aren't start/goal
+        const cell = state.grid[gy][gx];
+        if (cell !== CELL.EMPTY && cell !== undefined) {
+          toast('只能在空格子上放置物品', 'error');
+          return;
+        }
+        if (state.start.x === gx && state.start.y === gy) {
+          toast('不能放在起点上', 'error');
+          return;
+        }
+        if (state.goal.x === gx && state.goal.y === gy) {
+          toast('不能放在终点上', 'error');
+          return;
+        }
+        state.placedItems[key] = { type: tool, dir: dir };
+      }
+      break;
+  }
+  render();
+}
+
+// Canvas mouse events
+let isMouseDown = false;
+
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const cell = pixelToGrid(mx, my);
+  state.hoverCell = cell;
+
+  if (isMouseDown && cell) {
+    // Continuous painting for eraser and wall
+    if (state.currentTool === 'eraser' || state.currentTool === 'wall') {
+      applyToolToCell(cell.x, cell.y);
+    }
+  }
+  render();
+});
+
+canvas.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const cell = pixelToGrid(mx, my);
+  if (!cell) return;
+
+  isMouseDown = true;
+
+  if (e.button === 2) {
+    // Right click: rotate existing item
+    const key = `${cell.x},${cell.y}`;
+    if (state.placedItems[key]) {
+      state.placedItems[key].dir = (state.placedItems[key].dir + 1) % 4;
+      render();
+    }
+    return;
+  }
+
+  applyToolToCell(cell.x, cell.y);
+});
+
+canvas.addEventListener('mouseup', () => { isMouseDown = false; });
+canvas.addEventListener('mouseleave', () => { isMouseDown = false; state.hoverCell = null; render(); });
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// ========================================================================
+// PHYSICS SIMULATION (port from game physics.js)
+// ========================================================================
+
+function simulateStep() {
+  if (!state.cargo) return false;
+  const delta = DIR_DELTA[state.cargo.dir];
+  const nx = state.cargo.x + delta.dx;
+  const ny = state.cargo.y + delta.dy;
+
+  // 1. Check out of bounds
+  if (!isInBounds(nx, ny)) {
+    state.simResult = 'fail';
+    return false;
+  }
+
+  // 2. Update position
+  state.cargo.x = nx;
+  state.cargo.y = ny;
+  state.simSteps++;
+  state.trail.push({ x: nx, y: ny });
+
+  // 3. Check goal
+  if (nx === state.goal.x && ny === state.goal.y) {
+    state.simResult = 'success';
+    return false;
+  }
+
+  // 4. Check wall
+  if (state.grid[ny][nx] === CELL.WALL) {
+    state.simResult = 'fail';
+    return false;
+  }
+
+  // 5. Apply item effect
+  const key = `${nx},${ny}`;
+  const item = state.placedItems[key];
+  if (item) {
+    switch (item.type) {
+      case ITEM.CONVEYOR:
+        state.cargo.dir = item.dir;
+        break;
+      case ITEM.SPRING:
+        state.cargo.dir = (state.cargo.dir + 2) % 4;
+        break;
+      case ITEM.SLOPE:
+        state.cargo.dir = (state.cargo.dir + 1) % 4;
+        break;
+    }
+  }
+
+  // 6. Max steps
+  if (state.simSteps >= MAX_STEPS) {
+    state.simResult = 'fail';
+    return false;
+  }
+
+  return true;
+}
+
+function testLevel() {
+  if (state.animating) return;
+
+  // Validate level before testing
+  if (!state.start || !isInBounds(state.start.x, state.start.y)) {
+    toast('请先设置有效的起点位置', 'error');
+    return;
+  }
+  if (!state.goal || !isInBounds(state.goal.x, state.goal.y)) {
+    toast('请先设置有效的终点位置', 'error');
+    return;
+  }
+  if (state.start.x === state.goal.x && state.start.y === state.goal.y) {
+    toast('起点和终点不能在同一位置', 'error');
+    return;
+  }
+
+  // Reset simulation state
+  state.testing = true;
+  state.cargo = { x: state.start.x, y: state.start.y, dir: state.startDir };
+  state.trail = [{ x: state.start.x, y: state.start.y }];
+  state.simSteps = 0;
+  state.simResult = null;
+  state.animating = true;
+
+  hideResult();
+  document.getElementById('step-info').textContent = '步数: 0';
+  render();
+
+  // Animate step by step
+  state.animTimer = setInterval(() => {
+    const running = simulateStep();
+    render();
+    document.getElementById('step-info').textContent = `步数: ${state.simSteps}`;
+
+    if (!running) {
+      clearInterval(state.animTimer);
+      state.animTimer = null;
+      state.animating = false;
+      showResult();
+    }
+  }, ANIM_SPEED);
+}
+
+function resetTest() {
+  if (state.animTimer) {
+    clearInterval(state.animTimer);
+    state.animTimer = null;
+  }
+  state.testing = false;
+  state.animating = false;
+  state.cargo = null;
+  state.trail = [];
+  state.simSteps = 0;
+  state.simResult = null;
+  hideResult();
+  document.getElementById('step-info').textContent = '';
+  render();
+}
+
+function showResult() {
+  const overlay = document.getElementById('result-overlay');
+  const iconEl = document.getElementById('result-icon');
+  const textEl = document.getElementById('result-text');
+  const stepsEl = document.getElementById('result-steps');
+
+  if (state.simResult === 'success') {
+    iconEl.textContent = '\u2705';
+    textEl.textContent = '\u8fc7\u5173\u6210\u529f\uff01';
+    textEl.style.color = THEME.success;
+  } else {
+    iconEl.textContent = '\u274C';
+    textEl.textContent = '\u5173\u5361\u5931\u8d25';
+    textEl.style.color = THEME.fail;
+  }
+  stepsEl.textContent = `\u5171 ${state.simSteps} \u6b65`;
+  overlay.classList.add('show');
+
+  // Auto-hide after 3 seconds
+  setTimeout(() => {
+    hideResult();
+  }, 3000);
+}
+
+function hideResult() {
+  document.getElementById('result-overlay').classList.remove('show');
+}
+
+// ========================================================================
+// LEVEL MANAGEMENT
+// ========================================================================
+
+function buildLevelData() {
+  return {
+    id: state.id || ('level_' + Date.now()),
+    name: state.name || document.getElementById('level-name').value || '未命名关卡',
+    width: state.width,
+    height: state.height,
+    grid: state.grid.map(row => [...row]),
+    start: { ...state.start },
+    startDir: state.startDir,
+    goal: { ...state.goal },
+    items: {
+      conveyor: parseInt(document.getElementById('item-conveyor').value) || 0,
+      spring: parseInt(document.getElementById('item-spring').value) || 0,
+      slope: parseInt(document.getElementById('item-slope').value) || 0
+    },
+    placedItems: JSON.parse(JSON.stringify(state.placedItems))
+  };
+}
+
+function loadLevelIntoEditor(level) {
+  if (state.animTimer) { clearInterval(state.animTimer); state.animTimer = null; }
+  state.testing = false;
+  state.animating = false;
+  state.cargo = null;
+  state.trail = [];
+  state.simSteps = 0;
+  state.simResult = null;
+  hideResult();
+
+  state.id = level.id;
+  state.name = level.name;
+  state.width = level.width;
+  state.height = level.height;
+  state.grid = level.grid.map(row => [...row]);
+  state.start = { ...level.start };
+  state.startDir = level.startDir;
+  state.goal = { ...level.goal };
+  state.items = level.items ? { ...level.items } : { conveyor:0, spring:0, slope:0 };
+  state.placedItems = level.placedItems ? JSON.parse(JSON.stringify(level.placedItems)) : {};
+  state.activeLevelId = level.id;
+
+  // Update UI
+  document.getElementById('level-name').value = level.name;
+  document.getElementById('grid-width').value = level.width;
+  document.getElementById('grid-height').value = level.height;
+  document.getElementById('item-conveyor').value = state.items.conveyor;
+  document.getElementById('item-spring').value = state.items.spring;
+  document.getElementById('item-slope').value = state.items.slope;
+  document.getElementById('step-info').textContent = '';
+
+  fitGrid();
+  render();
+  refreshLevelList();
+}
+
+function newLevel() {
+  const w = parseInt(document.getElementById('grid-width').value) || 7;
+  const h = parseInt(document.getElementById('grid-height').value) || 5;
+  state.id = null;
+  state.name = '';
+  state.activeLevelId = null;
+  initGrid(w, h);
+  state.start = { x: 0, y: Math.floor(h / 2) };
+  state.startDir = 1;
+  state.goal = { x: w - 1, y: h - 1 };
+  state.placedItems = {};
+  state.items = { conveyor: 0, spring: 0, slope: 0 };
+
+  document.getElementById('level-name').value = '';
+  document.getElementById('item-conveyor').value = 0;
+  document.getElementById('item-spring').value = 0;
+  document.getElementById('item-slope').value = 0;
+  document.getElementById('step-info').textContent = '';
+
+  if (state.animTimer) { clearInterval(state.animTimer); state.animTimer = null; }
+  state.testing = false; state.animating = false;
+  state.cargo = null; state.trail = []; state.simSteps = 0; state.simResult = null;
+  hideResult();
+
+  render();
+  refreshLevelList();
+  toast('已创建新关卡', 'info');
+}
+
+async function saveLevel() {
+  const name = document.getElementById('level-name').value.trim();
+  if (!name) { toast('请输入关卡名称', 'error'); return; }
+  state.name = name;
+
+  const data = buildLevelData();
+
+  try {
+    const resp = await fetch('/api/levels', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const result = await resp.json();
+    if (result.success) {
+      state.id = result.id;
+      state.activeLevelId = result.id;
+      toast(`关卡 "${name}" 保存成功`, 'success');
+      refreshLevelList();
+    } else {
+      toast('保存失败: ' + (result.error || '未知错误'), 'error');
+    }
+  } catch (e) {
+    toast('保存失败: ' + e.message, 'error');
+  }
+}
+
+async function deleteLevel() {
+  if (!state.activeLevelId) { toast('没有选中的关卡', 'error'); return; }
+  if (!confirm(`确定删除关卡 "${state.name}" 吗？`)) return;
+
+  try {
+    const resp = await fetch(`/api/levels/${state.activeLevelId}`, { method: 'DELETE' });
+    const result = await resp.json();
+    if (result.success) {
+      toast(`已删除关卡`, 'success');
+      newLevel();
+      refreshLevelList();
+    } else {
+      toast('删除失败: ' + (result.error || ''), 'error');
+    }
+  } catch (e) {
+    toast('删除失败: ' + e.message, 'error');
+  }
+}
+
+async function pushLevels() {
+  try {
+    toast('正在推送到小程序...', 'info');
+    const resp = await fetch('/api/levels/push', { method: 'POST' });
+    const result = await resp.json();
+    if (result.success) {
+      toast(`已推送 ${result.count} 个关卡到小程序`, 'success');
+    } else {
+      toast('推送失败: ' + (result.error || ''), 'error');
+    }
+  } catch (e) {
+    toast('推送失败: ' + e.message, 'error');
+  }
+}
+
+function exportLevels() {
+  window.open('/api/levels/export', '_blank');
+}
+
+async function refreshLevelList() {
+  try {
+    const resp = await fetch('/api/levels');
+    const data = await resp.json();
+    state.levelList = data.levels || [];
+  } catch (e) {
+    state.levelList = [];
+  }
+
+  const ul = document.getElementById('level-list');
+  ul.innerHTML = '';
+  state.levelList.forEach(lv => {
+    const li = document.createElement('li');
+    if (lv.id === state.activeLevelId) li.classList.add('active');
+    li.innerHTML = `
+      <div>
+        <span class="lv-name">${escHtml(lv.name)}</span>
+        ${lv.verified ? '<span class="lv-verified">\u2714</span>' : ''}
+      </div>
+      <span class="lv-meta">${lv.width}x${lv.height}</span>
+    `;
+    li.addEventListener('click', () => loadLevelFromAPI(lv.id));
+    ul.appendChild(li);
+  });
+}
+
+async function loadLevelFromAPI(id) {
+  try {
+    const resp = await fetch(`/api/levels/${id}`);
+    if (!resp.ok) throw new Error('加载失败');
+    const level = await resp.json();
+    loadLevelIntoEditor(level);
+  } catch (e) {
+    toast('加载关卡失败: ' + e.message, 'error');
+  }
+}
+
+function applyGridSize() {
+  let w = parseInt(document.getElementById('grid-width').value) || 7;
+  let h = parseInt(document.getElementById('grid-height').value) || 5;
+  w = Math.max(4, Math.min(15, w));
+  h = Math.max(4, Math.min(12, h));
+  document.getElementById('grid-width').value = w;
+  document.getElementById('grid-height').value = h;
+
+  // Rebuild grid, trying to preserve existing data
+  const oldGrid = state.grid;
+  const oldW = state.width;
+  const oldH = state.height;
+  initGrid(w, h);
+
+  // Copy old cells where possible
+  for (let y = 0; y < Math.min(h, oldH); y++) {
+    for (let x = 0; x < Math.min(w, oldW); x++) {
+      state.grid[y][x] = oldGrid[y][x];
+    }
+  }
+
+  // Clamp start and goal
+  state.start.x = Math.min(state.start.x, w - 1);
+  state.start.y = Math.min(state.start.y, h - 1);
+  state.goal.x = Math.min(state.goal.x, w - 1);
+  state.goal.y = Math.min(state.goal.y, h - 1);
+
+  // Remove placed items that are out of bounds
+  const newPlaced = {};
+  Object.keys(state.placedItems).forEach(key => {
+    const [x, y] = key.split(',').map(Number);
+    if (x < w && y < h) newPlaced[key] = state.placedItems[key];
+  });
+  state.placedItems = newPlaced;
+
+  fitGrid();
+  render();
+}
+
+function clearGrid() {
+  if (!confirm('确定清空整个网格吗？')) return;
+  const w = state.width, h = state.height;
+  initGrid(w, h);
+  state.start = { x: 0, y: Math.floor(h / 2) };
+  state.startDir = 1;
+  state.goal = { x: w - 1, y: h - 1 };
+  render();
+}
+
+// ========================================================================
+// KEYBOARD SHORTCUTS
+// ========================================================================
+
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey || e.metaKey) {
+    switch (e.key.toLowerCase()) {
+      case 's':
+        e.preventDefault();
+        saveLevel();
+        break;
+      case 't':
+        e.preventDefault();
+        testLevel();
+        break;
+      case 'p':
+        e.preventDefault();
+        pushLevels();
+        break;
+    }
+  }
+  // Number keys for quick tool select
+  if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+    switch (e.key) {
+      case '1': selectTool('eraser'); break;
+      case '2': selectTool('wall'); break;
+      case '3': selectTool('start'); break;
+      case '4': selectTool('goal'); break;
+      case '5': selectTool('conveyor'); break;
+      case '6': selectTool('spring'); break;
+      case '7': selectTool('slope'); break;
+    }
+  }
+});
+
+// ========================================================================
+// TOAST NOTIFICATIONS
+// ========================================================================
+
+function toast(msg, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const div = document.createElement('div');
+  div.className = `toast toast-${type}`;
+  div.textContent = msg;
+  container.appendChild(div);
+  setTimeout(() => {
+    if (div.parentNode) div.parentNode.removeChild(div);
+  }, 3000);
+}
+
+// ========================================================================
+// UTILITIES
+// ========================================================================
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ========================================================================
+// INIT
+// ========================================================================
+
+function init() {
+  initGrid(7, 5);
+  state.start = { x: 0, y: 2 };
+  state.startDir = 1;
+  state.goal = { x: 6, y: 4 };
+  selectTool('eraser');
+  selectDir(0);
+  resizeCanvas();
+  refreshLevelList();
+}
+
+// Start
+init();
+</script>
+</body>
+</html>
