@@ -9,37 +9,34 @@
     "es6": true,
     "enhance": true,
     "postcss": true,
-    "preloadBackgroundData": false,
     "minified": true,
     "newFeature": true,
-    "coverView": true,
-    "nodeModules": false,
     "autoAudits": false,
-    "showShadowRootInWxmlPanel": true,
-    "scopeDataCheck": false,
-    "uglifyFileName": false,
     "checkInvalidKey": true,
     "checkSiteMap": true,
     "uploadWithSourceMap": true,
     "compileHotReLoad": true,
-    "lazyloadPlaceholderEnable": false,
-    "useMultiFrameRuntime": true,
-    "useApiHook": true,
-    "useApiHostProcess": true,
     "babelSetting": {
       "ignore": [],
       "disablePlugins": [],
       "outputPath": ""
     },
-    "condition": false
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "swc": false,
+    "disableSWC": true
   },
-  "compileType": "miniprogram",
+  "compileType": "game",
   "libVersion": "3.3.4",
-  "appid": "touristappid",
+  "appid": "wx507ea7f9220e0db9",
   "projectname": "deliver_game",
   "condition": {},
   "editorSetting": {
     "tabIndent": "insertSpaces",
     "tabSize": 2
-  }
+  },
+  "simulatorPluginLibVersion": {},
+  "isGameTourist": false
 }
